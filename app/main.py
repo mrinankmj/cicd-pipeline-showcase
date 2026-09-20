@@ -29,6 +29,13 @@ def list_tasks() -> list[dict]:
     return list(_tasks.values())
 
 
+@app.get("/tasks/{task_id}")
+def get_task(task_id: int) -> dict:
+    if task_id not in _tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return _tasks[task_id]
+
+
 @app.post("/tasks/{task_id}/done")
 def complete_task(task_id: int) -> dict:
     if task_id not in _tasks:
