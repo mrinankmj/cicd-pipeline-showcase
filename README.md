@@ -9,12 +9,16 @@ lint + test ──► build + Trivy scan ──► deploy to ephemeral kind clus
  (ruff, pytest)  (fails on HIGH/CRIT)   (rollout + smoke test)              (main only)
 ```
 
+## API
+Full CRUD on tasks: `POST /tasks`, `GET /tasks`, `GET /tasks/{id}`, `POST /tasks/{id}/done`, `DELETE /tasks/{id}`.
+
 ## Highlights
 - **Multi-stage Dockerfile**: small image, non-root user, healthcheck.
 - **Shift-left security**: Trivy blocks vulnerable images before they ship.
 - **Real end-to-end test**: every build is deployed to a throwaway Kubernetes cluster inside CI.
 - **Immutable tags**: images tagged with the short commit SHA plus `latest`.
 - **Least-privilege** workflow permissions; publishing uses the built-in `GITHUB_TOKEN` (no stored secrets).
+- **Coverage-checked**: every test run reports line coverage for `app/`.
 
 ## Run locally
 ```bash
