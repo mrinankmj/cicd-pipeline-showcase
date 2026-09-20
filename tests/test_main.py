@@ -28,3 +28,14 @@ def test_get_task():
 
 def test_get_missing_task_returns_404():
     assert client.get("/tasks/9999").status_code == 404
+
+
+def test_delete_task():
+    created = client.post("/tasks", params={"title": "delete me"}).json()
+    task_id = created["id"]
+    assert client.delete(f"/tasks/{task_id}").status_code == 204
+    assert client.get(f"/tasks/{task_id}").status_code == 404
+
+
+def test_delete_missing_task_returns_404():
+    assert client.delete("/tasks/9999").status_code == 404
