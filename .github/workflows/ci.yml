@@ -1,0 +1,77 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/task-api
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: pytest -q
+
+  build-scan:
+    needs: lint-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t task-api:ci .
+      - name: Trivy scan (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: task-api:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - run: docker save task-api:ci -o image.tar
+      - uses: actions/upload-artifact@v4
+        with: { name: image, path: image.tar }
+
+  e2e-kind:
+    needs: build-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: image }
+      - uses: helm/kind-action@v1
+        with: { cluster_name: ci }
+      - name: Deploy and smoke test
+        run: |
+          docker load -i image.tar
+          kind load docker-image task-api:ci --name ci
+          kubectl apply -f k8s/
+          kubectl rollout status deploy/task-api --timeout=120s
+          kubectl run smoke --rm -i --restart=Never --image=curlimages/curl -- \
+            curl -sf http://task-api/healthz
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: e2e-kind
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: image }
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag and push
+        run: |
+          docker load -i image.tar
+          docker tag task-api:ci $IMAGE:${GITHUB_SHA::7}
+          docker tag task-api:ci $IMAGE:latest
+          docker push $IMAGE --all-tags
