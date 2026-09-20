@@ -18,3 +18,13 @@ def test_task_lifecycle():
 
 def test_missing_task_returns_404():
     assert client.post("/tasks/9999/done").status_code == 404
+
+
+def test_get_task():
+    created = client.post("/tasks", params={"title": "read a task"}).json()
+    fetched = client.get(f"/tasks/{created['id']}").json()
+    assert fetched == created
+
+
+def test_get_missing_task_returns_404():
+    assert client.get("/tasks/9999").status_code == 404
