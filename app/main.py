@@ -51,6 +51,14 @@ def complete_task(task_id: int) -> dict:
     return _tasks[task_id]
 
 
+@app.patch("/tasks/{task_id}")
+def update_task(task_id: int, title: str) -> dict:
+    if task_id not in _tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    _tasks[task_id]["title"] = title
+    return _tasks[task_id]
+
+
 @app.delete("/tasks/{task_id}", status_code=204)
 def delete_task(task_id: int) -> None:
     if task_id not in _tasks:
