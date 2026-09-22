@@ -39,3 +39,21 @@ def test_delete_task():
 
 def test_delete_missing_task_returns_404():
     assert client.delete("/tasks/9999").status_code == 404
+
+
+def test_list_tasks_filters_by_done():
+    created = client.post("/tasks", params={"title": "filter me"}).json()
+    client.post(f"/tasks/{created['id']}/done")
+
+    done_titles = [t["title"] for t in client.get("/tasks", params={"done": True}).json()]
+    not_done_titles = [t["title"] for t in client.get("/tasks", params={"done": False}).json()]
+    assert "filter me" in done_titles
+    assert "filter me" not in not_done_titles
+
+
+def test_list_tasks_paginates():
+    for i in range(5):
+        client.post("/tasks", params={"title": f"page-task-{i}"})
+
+    page = client.get("/tasks", params={"limit": 2, "offset": 0}).json()
+    assert len(page) == 2
