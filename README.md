@@ -10,7 +10,7 @@ lint + test ──► build + Trivy scan ──► deploy to ephemeral kind clus
 ```
 
 ## API
-Full CRUD on tasks: `POST /tasks`, `GET /tasks`, `GET /tasks/{id}`, `POST /tasks/{id}/done`, `DELETE /tasks/{id}`.
+Full CRUD on tasks: `POST /tasks`, `GET /tasks` (filter with `?done=`, page with `?limit=&offset=`), `GET /tasks/{id}`, `PATCH /tasks/{id}`, `POST /tasks/{id}/done`, `DELETE /tasks/{id}`.
 
 ## Highlights
 - **Multi-stage Dockerfile**: small image, non-root user, healthcheck.
