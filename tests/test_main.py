@@ -57,3 +57,14 @@ def test_list_tasks_paginates():
 
     page = client.get("/tasks", params={"limit": 2, "offset": 0}).json()
     assert len(page) == 2
+
+
+def test_update_task_title():
+    created = client.post("/tasks", params={"title": "old title"}).json()
+    updated = client.patch(f"/tasks/{created['id']}", params={"title": "new title"}).json()
+    assert updated["title"] == "new title"
+    assert updated["id"] == created["id"]
+
+
+def test_update_missing_task_returns_404():
+    assert client.patch("/tasks/9999", params={"title": "x"}).status_code == 404
