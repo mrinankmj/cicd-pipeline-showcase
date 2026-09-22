@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 
 app = FastAPI(title="Task API", version=os.getenv("APP_VERSION", "dev"))
 
@@ -25,11 +25,15 @@ def create_task(title: str) -> dict:
 
 
 @app.get("/tasks")
-def list_tasks(done: bool | None = None) -> list[dict]:
+def list_tasks(
+    done: bool | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> list[dict]:
     tasks = list(_tasks.values())
     if done is not None:
         tasks = [t for t in tasks if t["done"] == done]
-    return tasks
+    return tasks[offset : offset + limit]
 
 
 @app.get("/tasks/{task_id}")
