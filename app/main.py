@@ -25,8 +25,11 @@ def create_task(title: str) -> dict:
 
 
 @app.get("/tasks")
-def list_tasks() -> list[dict]:
-    return list(_tasks.values())
+def list_tasks(done: bool | None = None) -> list[dict]:
+    tasks = list(_tasks.values())
+    if done is not None:
+        tasks = [t for t in tasks if t["done"] == done]
+    return tasks
 
 
 @app.get("/tasks/{task_id}")
